@@ -1,0 +1,4 @@
+For Rat1,SD1:
+it use "-" instead of "_"
+
+Rat8, SD10: The actmat has some problem. Check Irene's computer
