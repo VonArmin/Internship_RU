@@ -11,7 +11,7 @@ Requires spike sorting data with Phy format.
 conda activate cellassembly
 
 jupyter notebook
-Go to script
+Go to script in CellAssembly
 
 -Folder description:
 1) CellAssembly
