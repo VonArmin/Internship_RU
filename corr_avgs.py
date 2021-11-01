@@ -27,11 +27,12 @@ def bin_rats(folders):
     pathsv = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
     pathsr = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
     for i, folder in enumerate(folders):
-        type = folder.split('\\')[1].split('_')
+        type = folder.split('/')[5].split('_')
         if int(type[0].split('t')[1]) in rats['vehicle']:
             pathsv[type[2]].append(folder)
         if int(type[0].split('t')[1]) in rats['rgs']:
             pathsr[type[2]].append(folder)
+
     return pathsv, pathsr
 
 
@@ -42,14 +43,18 @@ def load_data(paths):
     '''
 
     data = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
-    for path in paths:
-        name = path.split('\\')[4]
-        type = name.split('_')[2]
-        try:
-            with pkl.load(open(f'{path}/corr_of_corr_{name}.pkl', 'rb')) as file:
-                data[type].append(file)
-        except FileNotFoundError:
-            pass
+    for con, paths in paths.items():
+        for path in paths:
+            name = path.split('/')[5]
+            print(name)
+            condition = name.split('_')[2]
+            print(condition)
+            try:
+                with open(f'{path}/corr_of_corr_{name}.pkl', 'rb') as file:
+                    pkldata = pkl.load(file)
+                    data[condition].append(pkldata)
+            except FileNotFoundError:
+                pass
     return data
 
 
