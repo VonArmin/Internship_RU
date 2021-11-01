@@ -1,4 +1,6 @@
 import pickle as pkl
+
+import numpy as np
 import pandas as pd
 import matplotlib as plt
 import seaborn as sn
@@ -14,8 +16,10 @@ def main():
     abspath = os.getcwd()
     subfolders = [f.path for f in os.scandir(abspath) if f.is_dir()]
     vehic, rgs = bin_rats(subfolders)
-    dataveh = load_data(vehic)
-    datargs = load_data(rgs)
+    vehfilter = filter_SD(vehic)
+    rgsfilter = filter_SD(rgs)
+    dataveh = load_data(vehfilter)
+    datargs = load_data(rgsfilter)
     avg_of_matrixes(dataveh, datargs)
 
 
@@ -36,8 +40,24 @@ def bin_rats(folders):
     return pathsv, pathsr
 
 
+def filter_SD(dataset):
+    '''filters out the rats which have more than one SD for a condition and only keeps the earliest study day
+    :param dataset: dataset of paths to corr_of_corr files
+    :return: filtered dataset
+    '''
+    outpaths = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
+    present_rats = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
+    for con, paths in dataset.items():
+        for path in paths:
+            name = path.split('/')[5].split('_')
+            if name[0] not in present_rats[con]:
+                present_rats[con].append(name[0])
+                outpaths[con].append(path)
+    return outpaths
+
+
 def load_data(paths):
-    '''loads corr_of_corr_{rat} data into a disctionary split in conditions
+    '''loads corr_of_corr_{rat} data into a dictionary split in conditions
     :param paths: paths of folders
     :return: dict of data split into conditions
     '''
@@ -46,9 +66,7 @@ def load_data(paths):
     for con, paths in paths.items():
         for path in paths:
             name = path.split('/')[5]
-            print(name)
             condition = name.split('_')[2]
-            print(condition)
             try:
                 with open(f'{path}/corr_of_corr_{name}.pkl', 'rb') as file:
                     pkldata = pkl.load(file)
@@ -59,8 +77,10 @@ def load_data(paths):
 
 
 def avg_of_matrixes(dataveh, datargs):
-    print(dataveh)
-    print(datargs)
-
+    for con, arr in dataveh.items():
+        averages = pd.concat([each.stack() for each in arr], axis=1) \
+            .apply(lambda x: x.mean(), axis=1) \
+            .unstack()
+        print(averages)
 
 main()
