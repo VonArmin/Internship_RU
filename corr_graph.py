@@ -18,7 +18,7 @@ def main():
 
 
 def single_set():
-    rat = 'Rat3_SD3_OR'
+    rat = 'Rat2_SD2_OR'
     path = 'C:/Users/Armin/PycharmProjects/Internship_RU'
     data = load_data(pkl.load(open(f'actmat_dict.pkl', 'rb')), rat)
     save_data(data, rat, path)
@@ -81,9 +81,11 @@ def load_data(data, name):
             # if max(arr) != 0:
             dataset[key][i] = list(arr)
         dataset[key] = pd.DataFrame(dataset[key])
+    key = list(dataset.keys())[9]
     for i in range(4):
-        dataset[f'PT5_part{i + 1}'] = dataset['post_trial5'].iloc[i * 108000: (i + 1) * 108000]
-    dataset.pop('post_trial5')
+        dataset[f'PT5_part{i + 1}'] = dataset[key].iloc[i * 108000: (i + 1) * 108000]
+    dataset.pop(key)
+
     return process_data(dataset)
 
 
@@ -108,25 +110,26 @@ def corr_corr(data, name, path=''):
     :return: none
     """
     print('generating correlation of correlation matrix')
-    try:
-        list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
-                'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
-        corrset = {}
-        for key, val in data.items():
-            # corrset[key] = np.array(data[key]).flatten()
-            corrset[key] = spatial.distance.squareform(data[key], checks=False)
-        df = pd.DataFrame(corrset).fillna(0)
-        df = df[list]
-        corrM = df.corr()
-
-        plt.figure(figsize=(18, 15), tight_layout=True)
-        plt.title(f'corr of corr {name}')
-        sn.heatmap(corrM, square=True, linewidth=0.1, annot=True, vmax=0.7, vmin=0)
-        plt.savefig(f'{path}/Graphs/corr_of_corr_{name}.png')
-        print('Done and saved')
-        plt.close()
-    except KeyError:
-        print('data is malformed, skipping')
+    # try:
+    list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
+            'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+    corrset = {}
+    for key, val in data.items():
+        # corrset[key] = np.array(data[key]).flatten()
+        corrset[key] = spatial.distance.squareform(data[key], checks=False)
+    df = pd.DataFrame(corrset).fillna(0)
+    df.columns = list
+    # df = df[list]
+    corrM = df.corr()
+    pkl.dump(corrM, open(f'{path}/corr_of_corr_{name}.pkl', 'wb'))
+    plt.figure(figsize=(18, 15), tight_layout=True)
+    plt.title(f'corr of corr {name}')
+    sn.heatmap(corrM, square=True, linewidth=0.1, annot=True, vmax=0.7, vmin=0)
+    plt.savefig(f'{path}/Graphs/corr_of_corr_{name}.png')
+    print('Done and saved')
+    plt.close()
+    # except KeyError:
+    #     print('data is malformed, skipping')
     # plt.show()
 
 
