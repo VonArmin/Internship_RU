@@ -2,7 +2,7 @@ import pickle as pkl
 
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import seaborn as sn
 import os.path
 
@@ -20,7 +20,8 @@ def main():
     rgsfilter = filter_SD(rgs)
     dataveh = load_data(vehfilter)
     datargs = load_data(rgsfilter)
-    avg_of_matrixes(dataveh, datargs)
+    avg_of_matrixes(dataveh, 'Vehicle')
+    avg_of_matrixes(datargs, 'RGS14')
 
 
 def bin_rats(folders):
@@ -76,11 +77,15 @@ def load_data(paths):
     return data
 
 
-def avg_of_matrixes(dataveh, datargs):
-    for con, arr in dataveh.items():
+def avg_of_matrixes(dataset, name):
+    for con, arr in dataset.items():
+        plt.figure(figsize=(18, 15), tight_layout=True)
         averages = pd.concat([each.stack() for each in arr], axis=1) \
             .apply(lambda x: x.mean(), axis=1) \
             .unstack()
-        print(averages)
+        plt.title(f'average of corr of corr matrixes for condition: {con} in {name} Rats')
+        sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0)
+        plt.savefig(f'avg_corr_of_corr_{con}_{name}.png')
+
 
 main()
