@@ -119,6 +119,7 @@ def corr_corr(data, name, path=''):
         corrset[key] = spatial.distance.squareform(data[key], checks=False)
     df = pd.DataFrame(corrset).fillna(0)
     df.columns = list
+    df = df[list]
     # df = df[list]
     corrM = df.corr()
     pkl.dump(corrM, open(f'{path}/corr_of_corr_{name}.pkl', 'wb'))

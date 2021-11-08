@@ -107,11 +107,12 @@ def corr_corr(data, name, path=''):
             corrset[key] = spatial.distance.squareform(data[key], checks=False)
         df = pd.DataFrame(corrset).fillna(0)
         df.columns = list
+        df = df[list]
         corrM = df.corr()
         pkl.dump(corrM, open(f'{path}/corr_of_corr_{name}.pkl', 'wb'))
-        plt.figure(figsize=(18, 15), tight_layout=True)
-        plt.title(f'corr of corr {name}')
-        sn.heatmap(corrM, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0)
+        # plt.figure(figsize=(18, 15), tight_layout=True)
+        # plt.title(f'corr of corr {name}')
+        # sn.heatmap(corrM, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0)
         # plt.savefig(f'{path}/Graphs/corr_of_corr_{name}.png')
         print('Done and saved')
         plt.close()

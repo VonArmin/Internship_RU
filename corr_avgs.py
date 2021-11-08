@@ -15,13 +15,18 @@ rats = {'vehicle': [1, 2, 6, 9], 'rgs': [3, 4, 7, 8]}
 def main():
     abspath = os.getcwd()
     subfolders = [f.path for f in os.scandir(abspath) if f.is_dir()]
+    print('Fetching Folders...')
     vehic, rgs = bin_rats(subfolders)
+    print('Filtering SDs...')
     vehfilter = filter_SD(vehic)
     rgsfilter = filter_SD(rgs)
+    print('Loading Data...')
     dataveh = load_data(vehfilter)
     datargs = load_data(rgsfilter)
-    avg_of_matrixes(dataveh, 'Vehicle')
-    avg_of_matrixes(datargs, 'RGS14')
+    vehavg = avg_of_matrices(dataveh, 'Vehicle')
+    rgsavg = avg_of_matrices(datargs, 'RGS14')
+    combine_avg_matrices(vehavg, 'Vehicle')
+    combine_avg_matrices(rgsavg, 'RGS14')
 
 
 def bin_rats(folders):
@@ -31,6 +36,7 @@ def bin_rats(folders):
     """
     pathsv = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
     pathsr = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
+
     for i, folder in enumerate(folders):
         type = folder.split('/')[5].split('_')
         if int(type[0].split('t')[1]) in rats['vehicle']:
@@ -46,6 +52,7 @@ def filter_SD(dataset):
     :param dataset: dataset of paths to corr_of_corr files
     :return: filtered dataset
     '''
+
     outpaths = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
     present_rats = {'OD': [], 'OR': [], 'HC': [], 'CON': []}
     for con, paths in dataset.items():
@@ -77,15 +84,37 @@ def load_data(paths):
     return data
 
 
-def avg_of_matrixes(dataset, name):
+def avg_of_matrices(dataset, name):
+    print(f'Generating matrices of conditions for {name}')
+    list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
+            'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+    dataset_avg = {}
     for con, arr in dataset.items():
-        plt.figure(figsize=(18, 15), tight_layout=True)
+        # plt.figure(figsize=(18, 15), tight_layout=True)
         averages = pd.concat([each.stack() for each in arr], axis=1) \
             .apply(lambda x: x.mean(), axis=1) \
             .unstack()
-        plt.title(f'average of corr of corr matrixes for condition: {con} in {name} Rats')
-        sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0)
-        plt.savefig(f'avg_corr_of_corr_{con}_{name}.png')
+        averages = averages[list]
+        averages = averages.reindex(list)
+        # plt.title(f'average of corr of corr matrixes for condition: {con} in {name} Rats')
+        # sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
+        # plt.savefig(f'avg_corr_of_corr_{con}_{name}.png')
+        dataset_avg[con] = averages
+    return dataset_avg
+
+
+def combine_avg_matrices(avgdata, name):
+    list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
+            'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+    averages = pd.concat([each.stack() for each in avgdata.values()], axis=1) \
+        .apply(lambda x: x.mean(), axis=1) \
+        .unstack()
+    averages = averages[list]
+    averages = averages.reindex(list)
+    plt.figure(figsize=(18, 15), tight_layout=True)
+    plt.title(f'average of condition corr of corr matrices for: {name}')
+    sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
+    plt.savefig(f'CoC_combined_con_{name}.png')
 
 
 main()
