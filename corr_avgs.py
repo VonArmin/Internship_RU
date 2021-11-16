@@ -27,7 +27,8 @@ def main():
     rgsavg = avg_of_matrices(datargs, 'RGS14')
     vehcom = combine_avg_matrices(vehavg, 'Vehicle')
     rgscom = combine_avg_matrices(rgsavg, 'RGS14')
-    substr_matrices(vehcom, rgscom)
+    substr_combined_matrices(vehcom, rgscom)
+    substr_con_matrices(vehavg, rgsavg)
 
 
 def bin_rats(folders):
@@ -119,11 +120,22 @@ def combine_avg_matrices(avgdata, name):
     return averages
 
 
-def substr_matrices(vehdata, rgsdata):
-    data = rgsdata.substract(vehdata)
+def substr_combined_matrices(vehdata, rgsdata):
+    data = rgsdata.subtract(vehdata)
     plt.figure(figsize=(18, 15), tight_layout=True)
-    plt.title(f'substracted matrices for corr of corr (rgs data - veh data) all con')
-    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1, vmin=-1, cmap='Greys')
+    plt.title(f'substracted matrices for corr of corr (rgs - veh) all con')
+    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=0.3, vmin=-0.3, cmap='Greys')
+    plt.savefig(f'subtracted_matrix_all_con.png')
+
+
+
+def substr_con_matrices(vehdata, rgsdata):
+    for con in vehdata:
+        data = rgsdata[con].subtract(vehdata[con])
+        plt.figure(figsize=(18, 15), tight_layout=True)
+        plt.title(f'subtracted matrices for condition: {con}, (rgs - veh)')
+        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=0.3, vmin=-0.3, cmap='Greys')
+        plt.savefig(f'subtracted_matrix_{con}.png')
     plt.show()
 
 
