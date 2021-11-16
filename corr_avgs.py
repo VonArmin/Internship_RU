@@ -25,8 +25,9 @@ def main():
     datargs = load_data(rgsfilter)
     vehavg = avg_of_matrices(dataveh, 'Vehicle')
     rgsavg = avg_of_matrices(datargs, 'RGS14')
-    combine_avg_matrices(vehavg, 'Vehicle')
-    combine_avg_matrices(rgsavg, 'RGS14')
+    vehcom = combine_avg_matrices(vehavg, 'Vehicle')
+    rgscom = combine_avg_matrices(rgsavg, 'RGS14')
+    substr_matrices(vehcom, rgscom)
 
 
 def bin_rats(folders):
@@ -115,6 +116,15 @@ def combine_avg_matrices(avgdata, name):
     plt.title(f'average of condition corr of corr matrices for: {name}')
     sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
     plt.savefig(f'CoC_combined_con_{name}.png')
+    return averages
+
+
+def substr_matrices(vehdata, rgsdata):
+    data = rgsdata.substract(vehdata)
+    plt.figure(figsize=(18, 15), tight_layout=True)
+    plt.title(f'substracted matrices for corr of corr (rgs data - veh data) all con')
+    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1, vmin=-1, cmap='Greys')
+    plt.show()
 
 
 main()
