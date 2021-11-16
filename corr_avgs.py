@@ -29,6 +29,8 @@ def main():
     rgscom = combine_avg_matrices(rgsavg, 'RGS14')
     substr_combined_matrices(vehcom, rgscom)
     substr_con_matrices(vehavg, rgsavg)
+    divide_combined_matrices(vehcom, rgscom)
+    divide_con_matrices(vehavg, rgsavg)
 
 
 def bin_rats(folders):
@@ -128,7 +130,6 @@ def substr_combined_matrices(vehdata, rgsdata):
     plt.savefig(f'subtracted_matrix_all_con.png')
 
 
-
 def substr_con_matrices(vehdata, rgsdata):
     for con in vehdata:
         data = rgsdata[con].subtract(vehdata[con])
@@ -136,6 +137,23 @@ def substr_con_matrices(vehdata, rgsdata):
         plt.title(f'subtracted matrices for condition: {con}, (rgs - veh)')
         sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=0.3, vmin=-0.3, cmap='Greys')
         plt.savefig(f'subtracted_matrix_{con}.png')
+
+
+def divide_combined_matrices(vehdata, rgsdata):
+    data = rgsdata.div(vehdata)
+    plt.figure(figsize=(18, 15), tight_layout=True)
+    plt.title(f'divided matrices for corr of corr (rgs - veh) all con')
+    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1.5, vmin=0, cmap='Greys')
+    plt.savefig(f'divided_matrix_all_con.png')
+
+
+def divide_con_matrices(vehdata, rgsdata):
+    for con in vehdata:
+        data = rgsdata[con].div(vehdata[con])
+        plt.figure(figsize=(18, 15), tight_layout=True)
+        plt.title(f'divided matrices for condition: {con}, (rgs - veh)')
+        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1.5, vmin=0, cmap='Greys')
+        plt.savefig(f'divided_matrix_{con}.png')
     plt.show()
 
 
