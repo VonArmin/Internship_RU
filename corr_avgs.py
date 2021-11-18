@@ -155,6 +155,15 @@ def compare_by_hc(data, name):
         plt.title(f'divided matrices for corr of corr {name} ({con} / HC)')
         sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
         plt.savefig(f'divided_matrix_{name}_{con}_by_HC.png')
+
+    allcon = pd.concat([each.stack() for each in averages.values()], axis=1) \
+        .apply(lambda x: x.mean(), axis=1) \
+        .unstack()
+    data = allcon.div(hc)
+    plt.figure(figsize=(18, 15), tight_layout=True)
+    plt.title(f'divided matrices for corr of corr {name} (avg / HC)')
+    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
+    plt.savefig(f'divided_matrix_{name}_all_by_HC.png')
     plt.show()
 
 
