@@ -21,16 +21,26 @@ def main():
     vehfilter = filter_SD(vehic)
     rgsfilter = filter_SD(rgs)
     print('Loading Data...')
+
+    # load raw data
     dataveh = load_data(vehfilter)
     datargs = load_data(rgsfilter)
+
+    # calculate avg of each condition matrix
     vehavg = avg_of_matrices(dataveh, 'Vehicle')
     rgsavg = avg_of_matrices(datargs, 'RGS14')
+
+    # combine the condition matrices
     vehcom = combine_avg_matrices(vehavg, 'Vehicle')
     rgscom = combine_avg_matrices(rgsavg, 'RGS14')
-    substr_combined_matrices(vehcom, rgscom)
-    substr_con_matrices(vehavg, rgsavg)
-    divide_combined_matrices(vehcom, rgscom)
-    divide_con_matrices(vehavg, rgsavg)
+
+    # #substract veh data from rgs data
+    # substr_combined_matrices(vehcom, rgscom)
+    # substr_con_matrices(vehavg, rgsavg)
+    #
+    # #devide rgs data by veh data
+    # divide_combined_matrices(vehcom, rgscom)
+    # divide_con_matrices(vehavg, rgsavg)
 
 
 def bin_rats(folders):
@@ -89,6 +99,11 @@ def load_data(paths):
 
 
 def avg_of_matrices(dataset, name):
+    """compute average per condtion for veh and rgs rats and creates heatmap
+    :param dataset: raw data
+    :param name: rgs or veh
+    :return: avg dataset
+    """
     print(f'Generating matrices of conditions for {name}')
     list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
             'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
@@ -108,8 +123,14 @@ def avg_of_matrices(dataset, name):
 
 
 def combine_avg_matrices(avgdata, name):
+    """compute avg for veh and rgs rats and creates heatmap
+    :param avgdata: averaged data per condition
+    :param name: rgs or veh
+    :return: avg from avgdata
+    """
     list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
             'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+    avgdata.pop('HC')
     averages = pd.concat([each.stack() for each in avgdata.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
         .unstack()
@@ -123,6 +144,11 @@ def combine_avg_matrices(avgdata, name):
 
 
 def substr_combined_matrices(vehdata, rgsdata):
+    """subtracts veh data from rgs data and creates heatmap
+    :param vehdata: veh data
+    :param rgsdata: rgs data
+    :return: none
+    """
     data = rgsdata.subtract(vehdata)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'substracted matrices for corr of corr (rgs - veh) all con')
@@ -131,6 +157,11 @@ def substr_combined_matrices(vehdata, rgsdata):
 
 
 def substr_con_matrices(vehdata, rgsdata):
+    """subtracts veh data from rgs and creates heatmap per con
+    :param vehdata: veh data
+    :param rgsdata: rgs data
+    :return: none
+    """
     for con in vehdata:
         data = rgsdata[con].subtract(vehdata[con])
         plt.figure(figsize=(18, 15), tight_layout=True)
@@ -140,21 +171,30 @@ def substr_con_matrices(vehdata, rgsdata):
 
 
 def divide_combined_matrices(vehdata, rgsdata):
+    """divide rgs data by veh data and creates heatmap
+    :param vehdata: veh data
+    :param rgsdata: rgs data
+    :return: none
+    """
     data = rgsdata.div(vehdata)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'divided matrices for corr of corr (rgs - veh) all con')
-    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1.5, vmin=0, cmap='Greys')
+    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
     plt.savefig(f'divided_matrix_all_con.png')
 
 
 def divide_con_matrices(vehdata, rgsdata):
+    """divide rgs data by veh data per con and creates heatmap
+    :param vehdata: veh data
+    :param rgsdata: rgs data
+    :return: none
+    """
     for con in vehdata:
         data = rgsdata[con].div(vehdata[con])
         plt.figure(figsize=(18, 15), tight_layout=True)
         plt.title(f'divided matrices for condition: {con}, (rgs - veh)')
-        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=1.5, vmin=0, cmap='Greys')
+        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
         plt.savefig(f'divided_matrix_{con}.png')
-    plt.show()
 
 
 main()
