@@ -34,6 +34,10 @@ def main():
     vehcom = combine_avg_matrices(vehavg, 'Vehicle')
     rgscom = combine_avg_matrices(rgsavg, 'RGS14')
 
+    # compare dataset with HC
+    compare_by_hc(vehavg, 'Vehicle')
+    compare_by_hc(rgsavg, 'RGS')
+
     # #substract veh data from rgs data
     # substr_combined_matrices(vehcom, rgscom)
     # substr_con_matrices(vehavg, rgsavg)
@@ -130,7 +134,6 @@ def combine_avg_matrices(avgdata, name):
     """
     list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
             'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
-    avgdata.pop('HC')
     averages = pd.concat([each.stack() for each in avgdata.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
         .unstack()
@@ -141,6 +144,18 @@ def combine_avg_matrices(avgdata, name):
     sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
     plt.savefig(f'CoC_combined_con_{name}.png')
     return averages
+
+
+def compare_by_hc(data, name):
+    hc = data['HC']
+    averages = dict((key, data[key]) for key in ['CON', 'OD', 'OR'])
+    for con in averages:
+        data = averages[con].div(hc)
+        plt.figure(figsize=(18, 15), tight_layout=True)
+        plt.title(f'divided matrices for corr of corr {name} ({con} / HC)')
+        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
+        plt.savefig(f'divided_matrix_{name}_{con}_by_HC.png')
+    plt.show()
 
 
 def substr_combined_matrices(vehdata, rgsdata):
