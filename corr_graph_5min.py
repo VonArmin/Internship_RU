@@ -111,9 +111,9 @@ def load_data(data, name):
                     nameitt += 1
                 data_tuples.append((f'{strname}', int(key[10:11]), bin+1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
-                order_list(data_tuples)
 
 
+    order_list(data_tuples)
     return process_data(outdata)
 
 
