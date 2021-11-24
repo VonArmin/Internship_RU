@@ -49,7 +49,7 @@ def run_calculations(folders):
     for path in folders:
         try:
             print('-' * 40)
-            name = path.split('/')[5]
+            name = f'{path.split(" / ")[5]}'
             if not os.path.exists(f'{path}/corr_dataset_{name}.pkl'):
                 print(f'loading data for {name}...')
                 data = pkl.load(open(f'{path}/actmat_dict.pkl', 'rb'))

@@ -109,7 +109,7 @@ def avg_of_matrices(dataset, name):
     :return: avg dataset
     """
     print(f'Generating matrices of conditions for {name}')
-    list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
+    order = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
             'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
     dataset_avg = {}
     for con, arr in dataset.items():
@@ -117,8 +117,8 @@ def avg_of_matrices(dataset, name):
         averages = pd.concat([each.stack() for each in arr], axis=1) \
             .apply(lambda x: x.mean(), axis=1) \
             .unstack()
-        averages = averages[list]
-        averages = averages.reindex(list)
+        averages = averages[order.reverse()]
+        averages = averages.reindex(order)
         # plt.title(f'average of corr of corr matrixes for condition: {con} in {name} Rats')
         # sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
         # plt.savefig(f'avg_corr_of_corr_{con}_{name}.png')
@@ -132,13 +132,13 @@ def combine_avg_matrices(avgdata, name):
     :param name: rgs or veh
     :return: avg from avgdata
     """
-    list = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
+    order = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
             'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
     averages = pd.concat([each.stack() for each in avgdata.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
         .unstack()
-    averages = averages[list]
-    averages = averages.reindex(list)
+    averages = averages[order.reverse()]
+    averages = averages.reindex(order)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'average of condition corr of corr matrices for: {name}')
     sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
@@ -155,6 +155,7 @@ def compare_by_hc(data, name):
         plt.title(f'divided matrices for corr of corr {name} ({con} / HC)')
         sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
         plt.savefig(f'divided_matrix_{name}_{con}_by_HC.png')
+        save_data(data, f'data_matrix_{name}_{con}_by_HC')
 
     allcon = pd.concat([each.stack() for each in averages.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
@@ -164,6 +165,7 @@ def compare_by_hc(data, name):
     plt.title(f'divided matrices for corr of corr {name} (avg / HC)')
     sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
     plt.savefig(f'divided_matrix_{name}_all_by_HC.png')
+    save_data(data, f'divided_matrix_{name}_all_by_HC')
     plt.show()
 
 
@@ -219,6 +221,11 @@ def divide_con_matrices(vehdata, rgsdata):
         plt.title(f'divided matrices for condition: {con}, (rgs - veh)')
         sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
         plt.savefig(f'divided_matrix_{con}.png')
+
+
+def save_data(data: pd.DataFrame, name):
+    data.to_csv(path_or_buf=f'{name}.csv', sep=',')
+    data.to_pickle(f'{name}.pkl')
 
 
 main()
