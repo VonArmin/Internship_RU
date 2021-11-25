@@ -1,6 +1,4 @@
 import pickle as pkl
-
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
@@ -10,6 +8,7 @@ import os.path
 plots them into averages per condition and per condition split between rgs and veh'''
 
 rats = {'vehicle': [1, 2, 6, 9], 'rgs': [3, 4, 7, 8]}
+order = pkl.load(open('order_by_timeperiod.pkl', 'rb'))
 
 
 def main():
@@ -94,7 +93,7 @@ def load_data(paths):
             name = path.split('/')[5]
             condition = name.split('_')[2]
             try:
-                with open(f'{path}/corr_of_corr_{name}.pkl', 'rb') as file:
+                with open(f'{path}/corr_of_corr_{name}_5min_I.pkl', 'rb') as file:
                     pkldata = pkl.load(file)
                     data[condition].append(pkldata)
             except FileNotFoundError:
@@ -109,19 +108,14 @@ def avg_of_matrices(dataset, name):
     :return: avg dataset
     """
     print(f'Generating matrices of conditions for {name}')
-    order = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
-            'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+
     dataset_avg = {}
     for con, arr in dataset.items():
-        # plt.figure(figsize=(18, 15), tight_layout=True)
         averages = pd.concat([each.stack() for each in arr], axis=1) \
             .apply(lambda x: x.mean(), axis=1) \
             .unstack()
-        averages = averages[order.reverse()]
         averages = averages.reindex(order)
-        # plt.title(f'average of corr of corr matrixes for condition: {con} in {name} Rats')
-        # sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
-        # plt.savefig(f'avg_corr_of_corr_{con}_{name}.png')
+        averages = averages[order]
         dataset_avg[con] = averages
     return dataset_avg
 
@@ -132,39 +126,49 @@ def combine_avg_matrices(avgdata, name):
     :param name: rgs or veh
     :return: avg from avgdata
     """
-    order = ['pre_sleep', 'trial1', 'post_trial1', 'trial2', 'post_trial2', 'trial3', 'post_trial3', 'trial4',
-            'post_trial4', 'trial5', 'PT5_part1', 'PT5_part2', 'PT5_part3', 'PT5_part4']
+
     averages = pd.concat([each.stack() for each in avgdata.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
         .unstack()
-    averages = averages[order.reverse()]
     averages = averages.reindex(order)
+    averages = averages[order]
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'average of condition corr of corr matrices for: {name}')
-    sn.heatmap(averages, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0, cmap='Greys')
-    plt.savefig(f'CoC_combined_con_{name}.png')
+    plot = sn.heatmap(averages, square=True,  vmax=1, vmin=0, cmap='Greys')
+    plot.hlines(5, *plot.get_xlim(), colors='green', )
+    plot.vlines(5, *plot.get_xlim(), colors='green', )
+    plt.savefig(f'CoC_combined_con_{name}_per.png')
     return averages
 
 
 def compare_by_hc(data, name):
+    """copare data by deviding all but HC by HC matrix
+    :param data: dataset
+    :param name: name of analysis
+    :return: none
+    """
     hc = data['HC']
     averages = dict((key, data[key]) for key in ['CON', 'OD', 'OR'])
     for con in averages:
         data = averages[con].div(hc)
         plt.figure(figsize=(18, 15), tight_layout=True)
         plt.title(f'divided matrices for corr of corr {name} ({con} / HC)')
-        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
-        plt.savefig(f'divided_matrix_{name}_{con}_by_HC.png')
+        plot = sn.heatmap(data, square=True,  vmax=2, vmin=0, cmap='coolwarm')
+        plt.savefig(f'divided_matrix_{name}_{con}_by_HC_per.png')
+        plot.hlines(5, *plot.get_xlim(), colors='green', )
+        plot.vlines(5, *plot.get_xlim(), colors='green', )
         save_data(data, f'data_matrix_{name}_{con}_by_HC')
-
+    plt.close()
     allcon = pd.concat([each.stack() for each in averages.values()], axis=1) \
         .apply(lambda x: x.mean(), axis=1) \
         .unstack()
     data = allcon.div(hc)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'divided matrices for corr of corr {name} (avg / HC)')
-    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
-    plt.savefig(f'divided_matrix_{name}_all_by_HC.png')
+    plot = sn.heatmap(data, square=True,  vmax=2, vmin=0, cmap='coolwarm')
+    plot.hlines(5, *plot.get_xlim(), colors='green', )
+    plot.vlines(5, *plot.get_xlim(), colors='green', )
+    plt.savefig(f'divided_matrix_{name}_all_by_HC_per.png')
     save_data(data, f'divided_matrix_{name}_all_by_HC')
     plt.show()
 
@@ -178,7 +182,7 @@ def substr_combined_matrices(vehdata, rgsdata):
     data = rgsdata.subtract(vehdata)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'substracted matrices for corr of corr (rgs - veh) all con')
-    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=0.3, vmin=-0.3, cmap='Greys')
+    sn.heatmap(data, square=True, vmax=0.3, vmin=-0.3, cmap='Greys')
     plt.savefig(f'subtracted_matrix_all_con.png')
 
 
@@ -192,7 +196,7 @@ def substr_con_matrices(vehdata, rgsdata):
         data = rgsdata[con].subtract(vehdata[con])
         plt.figure(figsize=(18, 15), tight_layout=True)
         plt.title(f'subtracted matrices for condition: {con}, (rgs - veh)')
-        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=0.3, vmin=-0.3, cmap='Greys')
+        sn.heatmap(data, square=True,  vmax=0.3, vmin=-0.3, cmap='Greys')
         plt.savefig(f'subtracted_matrix_{con}.png')
 
 
@@ -205,8 +209,10 @@ def divide_combined_matrices(vehdata, rgsdata):
     data = rgsdata.div(vehdata)
     plt.figure(figsize=(18, 15), tight_layout=True)
     plt.title(f'divided matrices for corr of corr (rgs - veh) all con')
-    sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
-    plt.savefig(f'divided_matrix_all_con.png')
+    plot = sn.heatmap(data, square=True,  vmax=2, vmin=0, cmap='coolwarm')
+    plot.hlines(5, *plot.get_xlim(), colors='green', )
+    plot.vlines(5, *plot.get_xlim(), colors='green', )
+    plt.savefig(f'divided_matrix_all_con_per.png')
 
 
 def divide_con_matrices(vehdata, rgsdata):
@@ -219,8 +225,10 @@ def divide_con_matrices(vehdata, rgsdata):
         data = rgsdata[con].div(vehdata[con])
         plt.figure(figsize=(18, 15), tight_layout=True)
         plt.title(f'divided matrices for condition: {con}, (rgs - veh)')
-        sn.heatmap(data, square=True, linewidth=0.1, annot=True, vmax=2, vmin=0, cmap='coolwarm')
-        plt.savefig(f'divided_matrix_{con}.png')
+        plot = sn.heatmap(data, square=True, vmax=2, vmin=0, cmap='coolwarm')
+        plot.hlines(5, *plot.get_xlim(), colors='green', )
+        plot.vlines(5, *plot.get_xlim(), colors='green', )
+        plt.savefig(f'divided_matrix_{con}_per.png')
 
 
 def save_data(data: pd.DataFrame, name):
