@@ -142,7 +142,7 @@ def custom_batch(rgs_data, rgs_sems, vehic_data, vehic_sems, cols, text):
     plt.ylim(0, 0.25)
     plt.legend()
     plt.title('all rats, all conditions, ' + text)
-    plt.savefig('Graphs\\Graph_all_rats_all_con_' + text)
+    plt.savefig('Graph\\Graph_all_rats_all_con_' + text)
     plt.show()
     pass
 
@@ -187,7 +187,7 @@ def average_per_bin(rgs_data, vehic_data):
     plt.title('Avg per ens per time bin for all rats')
     plt.ylim(0, 0.2)
     plt.legend()
-    plt.savefig('Graphs\\avgs_per_bin_per_ens_all_rats')
+    plt.savefig('Graph\\avgs_per_bin_per_ens_all_rats')
     plt.show()
 
 
@@ -214,7 +214,7 @@ def per_con_graph(data, sems, rat_type):
         plt.ylabel('Strength')
         plt.xlabel('Time Bin')
         plt.title('{}, Condition: {}'.format(rat_type, key))
-        plt.savefig(fname='Graphs\\graph_{}_Condition_{}.png'.format(rat_type, key))
+        plt.savefig(fname='Graph\\graph_{}_Condition_{}.png'.format(rat_type, key))
         plt.show()
     # single_fig(data, rat_type)
 
@@ -240,7 +240,7 @@ def all_con_single_graph(data, sems, rat_type):
 
         # plt.plot(data[key], 'ko')
     plt.legend()
-    plt.savefig(fname='Graphs\\graph_{}_all_conditions'.format(rat_type))
+    plt.savefig(fname='Graph\\graph_{}_all_conditions'.format(rat_type))
     plt.show()
 
 

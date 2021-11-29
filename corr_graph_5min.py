@@ -51,6 +51,7 @@ def run_calculations(folders):
     :param folders: array of strings of paths
     :return: none
     """
+    means = {}
     for rat_folder in folders:
         try:
             print('-' * 40)
@@ -68,13 +69,15 @@ def run_calculations(folders):
             # if not os.path.exists(f'{path}/Graph/corr_of_corr_{name}.png'):
 
             # dataset, name of plot, dividing lines between sleep/nosleep, which order, path to rat folder, additional path
-            corr_corr(data, f'{name}_I', order_i, True, rat_folder, path)
-            corr_corr(data, f'{name}_II', order_ii, False, rat_folder, path)
+            means[name] = corr_corr(data, f'{name}_I', order_i, True, rat_folder, path)
+
+            # corr_corr(data, f'{name}_II', order_ii, False, rat_folder, path)
 
         except FileNotFoundError:
             print('No actmat found, skipping...')
         except pkl.UnpicklingError:
             print('something wrong when unpacking pickle file, skipping...')
+    print(means)
 
 
 def load_data(data, name):
@@ -162,15 +165,20 @@ def corr_corr(data, name, order, line, rat_folder='', path='/media/irene/Data/Ra
     corrM = df.corr(method='pearson')
     pkl.dump(corrM, open(f'{rat_folder}/corr_of_corr_{name}.pkl', 'wb'))
     plt.figure(figsize=(18, 15), tight_layout=True)
-    plt.title(f'corr of corr {name}')
+
     plot = sn.heatmap(corrM, square=True, vmax=1, vmin=0)
     if line:
         plot.hlines(5, *plot.get_xlim(), colors='green', )
         plot.vlines(5, *plot.get_xlim(), colors='green', )
+
+    plt.title(f'corr of corr {name}')
     plt.savefig(f'{rat_folder}/Graph/corr_of_corr_{name}.png')
     plt.savefig(f'{path}/corr_of_corr_{name}.png')
     print('Done and saved')
     plt.close()
+    df.stack()
+    mean = df.mean()
+    return mean
 
 
 def order_list(tuples, order1, order2):

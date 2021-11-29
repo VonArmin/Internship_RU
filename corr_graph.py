@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
 import os.path
-from scipy import spatial
+from scipy import spatial, stats
 
 """this script creates matrixes of correlation between neurons in one rat and the correlation of those neurons between timebins"""
 
@@ -18,13 +18,13 @@ def main():
 
 
 def single_set():
-    rat = 'Rat2_SD2_OR'
+    rat = 'Rat3_SD14_HC'
     path = 'C:/Users/Armin/PycharmProjects/Internship_RU'
     data = load_data(pkl.load(open(f'actmat_dict.pkl', 'rb')), rat)
     save_data(data, rat, path)
     data = pkl.load(open(f'{path}/corr_dataset_{rat}.pkl', 'rb'))
-    # plot_data(data, rat, path)
-    corr_corr(data, rat, path)
+    plot_data(data, rat, path)
+    # corr_corr(data, rat, path)
 
 
 def create_folders(abspath):
@@ -97,8 +97,21 @@ def process_data(dataset):
     print('processing data...')
     corrset = {}
     for key, val in dataset.items():
-        corrM = val.corr()
-        corrset[key] = corrM
+
+        corrM = val.corr().fillna(0)
+
+        # zscore = stats.zscore(corrM, ddof=1)
+
+        std = corrM.std(ddof=1)
+
+        filter = std + std
+        zscore = corrM.mask(corrM > filter, 0)
+
+        for i in zscore.columns:
+            zscore.at[i, i] = 1
+
+        corrset[key] = zscore
+
     return corrset
 
 

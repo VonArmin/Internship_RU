@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
 import os.path
-from scipy import spatial
+from scipy import spatial, stats
 
 """this script creates matrixes of correlation between neurons in one rat and the correlation of those neurons between timebins"""
 
@@ -38,7 +38,7 @@ def run_calculations(folders):
     for path in folders:
         try:
             print('-' * 40)
-            name = path.split('/')[5]
+            name = f'{path.split("/")[5]}_no_outl'
             if not os.path.exists(f'{path}/corr_dataset_{name}.pkl'):
                 print(f'loading data for {name}...')
                 data = pkl.load(open(f'{path}/actmat_dict.pkl', 'rb'))
@@ -86,6 +86,10 @@ def process_data(dataset):
     print('processing data...')
     corrset = {}
     for key, val in dataset.items():
+        zscore = stats.zscore(val, ddof=1)
+        std = zscore.std(ddof=1)
+        filter = std + std + std
+
         corrM = val.corr()
         corrset[key] = corrM
     return corrset
@@ -113,7 +117,7 @@ def corr_corr(data, name, path=''):
         # plt.figure(figsize=(18, 15), tight_layout=True)
         # plt.title(f'corr of corr {name}')
         # sn.heatmap(corrM, square=True, linewidth=0.1, annot=True, vmax=1, vmin=0)
-        # plt.savefig(f'{path}/Graphs/corr_of_corr_{name}.png')
+        # plt.savefig(f'{path}/Graph/corr_of_corr_{name}.png')
         print('Done and saved')
         plt.close()
     except KeyError:
