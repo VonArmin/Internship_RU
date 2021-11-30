@@ -111,7 +111,7 @@ def load_data(paths):
 
 
 def avg_of_matrices(dataset, name, order):
-    """compute average per condtion for veh and rgs rats and creates heatmap
+    """compute average per condition for veh and rgs rats and creates heatmap
     :param dataset: raw data
     :param name: rgs or veh
     :return: avg dataset
