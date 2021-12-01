@@ -87,7 +87,7 @@ def find_distribution(data):
 
 
 def get_std_mean(data: list):
-    return np.mean(data), np.std(data)
+    return np.std(data), np.mean(data)
 
 
 def compare_with_org(stds, means, original):
