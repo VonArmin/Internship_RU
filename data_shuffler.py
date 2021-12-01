@@ -9,18 +9,25 @@ from scipy import spatial, stats
 """this script loads an actmat_dict.pkl file and randomizes the order of the spikes for each neuron, 
 fetches the std and mean for each randomized neuron and compares it with the original file"""
 
-iterations = 500
+iterations = 5
 keys = []
+file = pkl.load(open('actmat_dict.pkl', 'rb'))
 
 
 def main():
-    file = pkl.load(open('actmat_dict.pkl', 'rb'))
+    # new_run()
+    dataset = load_data(file)
+    plot_existing(pkl.load(open('graph_values_5.pkl', 'rb')))
+    # dataset = load_data(file)
+    # stds = pkl.load(open(f'stds_{iterations}.pkl', 'rb'))
+    # means = pkl.load(open(f'means_{iterations}.pkl', 'rb'))
+    # compare_with_org(stds, means, get_corr(dataset))
+
+
+def new_run():
     dataset = load_data(file)
     randomized_data = randomize_timebins(dataset)
-    # print(get_corr(dataset))
     stds, means = find_distribution(randomized_data)
-    pkl.dump(stds, open(f'stds_{iterations}.pkl', 'wb'))
-    pkl.dump(means, open(f'means_{iterations}.pkl', 'wb'))
     compare_with_org(stds, means, get_corr(dataset))
 
 
@@ -92,18 +99,42 @@ def get_std_mean(data: list):
 
 def compare_with_org(stds, means, original):
     values = {}
+    print('calculating...')
     for key in keys:
         values[key] = []
         for neuron in range(len(stds[key])):
             value = (original[key][neuron] - means[key][neuron]) / stds[key][neuron]
             values[key].append(value)
+    print('plotting')
     for key in keys:
         values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
         plt.figure(figsize=(18, 15))
-        sn.heatmap(values[key], square=True, vmax=500, vmin=0)
+        sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
         plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations')
+        plt.xlabel('Neuron #')
+        plt.ylabel('Neuron #')
+        plt.savefig(f'shuffled_{key}_{iterations}.png')
+
+    plt.show()
+    save_data(stds, means, values)
+
+
+def plot_existing(data):
+    print('plotting')
+    for key in keys:
+        plt.figure(figsize=(18, 15))
+        sn.heatmap(data[key], square=True, cmap='coolwarm', center=0)
+        plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations')
+        plt.xlabel('Neuron #')
+        plt.ylabel('Neuron #')
         plt.savefig(f'shuffled_{key}_{iterations}.png')
     plt.show()
+
+
+def save_data(stds, means, vals):
+    pkl.dump(stds, open(f'stds_{iterations}.pkl', 'wb'))
+    pkl.dump(means, open(f'means_{iterations}.pkl', 'wb'))
+    pkl.dump(vals, open(f'graph_values_{iterations}.pkl', 'wb'))
 
 
 main()
