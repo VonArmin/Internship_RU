@@ -29,7 +29,7 @@ def single_set():
     save_data(data, rat, path)
     data = pkl.load(open(f'{path}/corr_dataset_{rat}.pkl', 'rb'))
     # plot_data(data, rat, path)
-    corr_corr(data, rat, path)
+    # corr_corr(data, rat, path)
 
 
 def create_folders(abspath):
@@ -77,7 +77,7 @@ def run_calculations(folders):
             print('No actmat found, skipping...')
         except pkl.UnpicklingError:
             print('something wrong when unpacking pickle file, skipping...')
-    print(means)
+    write_to_csv(means)
 
 
 def load_data(data, name):
@@ -95,7 +95,7 @@ def load_data(data, name):
 
     timebins = {'trial': ['trial1', 'trial2', 'trial3', 'trial4', 'trial5'],
                 'posttrial': ['post_trial1', 'post_trial2', 'post_trial3', 'post_trial4']}
-    binsnames = ['(0-5)', '(5-10)', '(10-15)', '(15-20)', '(20-25)', '(25-30)', '(30-35)', '(35-40)', '(40-45)']
+    binnames = ['(0-5)', '(5-10)', '(10-15)', '(15-20)', '(20-25)', '(25-30)', '(30-35)', '(35-40)', '(40-45)']
 
     for key, val in data.items():
         key = key.replace('-', '_').lower()
@@ -114,7 +114,7 @@ def load_data(data, name):
         if key in timebins['posttrial']:
             # take 9 bins of 5 mins (12000)
             for bin in range(9):
-                strname = f'{key}_{binsnames[bin]}'
+                strname = f'{key}_{binnames[bin]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
 
@@ -124,7 +124,7 @@ def load_data(data, name):
             for bin in range(36):
                 if bin % 9 == 0:
                     nameitt += 1
-                strname = f'PT5_{nameitt}_{binsnames[bin % 9]}'
+                strname = f'PT5_{nameitt}_{binnames[bin % 9]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
 
@@ -164,24 +164,44 @@ def corr_corr(data, name, order, line, rat_folder='', path='/media/irene/Data/Ra
     df = df[order]
     corrM = df.corr(method='pearson')
     pkl.dump(corrM, open(f'{rat_folder}/corr_of_corr_{name}.pkl', 'wb'))
-    plt.figure(figsize=(18, 15), tight_layout=True)
-
-    plot = sn.heatmap(corrM, square=True, vmax=1, vmin=0)
-    if line:
-        plot.hlines(5, *plot.get_xlim(), colors='green', )
-        plot.vlines(5, *plot.get_xlim(), colors='green', )
-
-    plt.title(f'corr of corr {name}')
-    plt.savefig(f'{rat_folder}/Graph/corr_of_corr_{name}.png')
-    plt.savefig(f'{path}/corr_of_corr_{name}.png')
-    print('Done and saved')
-    plt.close()
+    # plt.figure(figsize=(18, 15), tight_layout=True)
+    #
+    # plot = sn.heatmap(corrM, square=True, vmax=1, vmin=0)
+    # if line:
+    #     plot.hlines(5, *plot.get_xlim(), colors='green', )
+    #     plot.vlines(5, *plot.get_xlim(), colors='green', )
+    #
+    # plt.title(f'corr of corr {name}')
+    # plt.savefig(f'{rat_folder}/Graph/corr_of_corr_{name}.png')
+    # plt.savefig(f'{path}/corr_of_corr_{name}.png')
+    # print('Done and saved')
+    # plt.close()
     df.stack()
     mean = df.mean()
+    mean = df.stack().mean()
+
     return mean
 
 
+def write_to_csv(data):
+    """save data to csv file
+    :param data: data to save
+    :return: none
+    """
+    file = open('avgs_per_sd_whole_arr(5min).csv', 'w')
+    file.write('Rat,SD,Con,avg\n')
+    for key, avg in data.items():
+        rat, sd, con = key.split('_')[0], key.split('_')[1], key.split('_')[2]
+        file.write(f'{rat},{sd},{con},{avg}\n')
+
+
 def order_list(tuples, order1, order2):
+    """order supplied tuples based on order 1 and 2
+    :param tuples: (timebin, int1, int2)
+    :param order1:int used to sort
+    :param order2: int used to sort
+    :return: ordered list
+    """
     ordered = []
     arr = sorted(tuples, key=itemgetter(order1, order2))
     for i in arr:
