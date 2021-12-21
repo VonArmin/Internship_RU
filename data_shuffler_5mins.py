@@ -10,17 +10,17 @@ from scipy import spatial, stats
 """this script loads an actmat_dict.pkl file and randomizes the order of the spikes for each neuron, 
 fetches the std and mean for each randomized neuron and compares it with the original file"""
 
-iterations = 5
+iterations = 500
 keys = []
-path = 'C:/Users/Armin/PycharmProjects/Internship_RU'
+path = '/media/irene/Data/Rat_OS_EPhys_RGS14_Cell_Assembly'
 order_i = []
 order_ii = []
 order_iii = []
 
 
 def main():
-    # run_multiple()
-    run_task('rat3_SD14_shuff', pkl.load(open('actmat_dict.pkl', 'rb')), path)
+    run_multiple()
+    #run_task('rat3_SD14_shuff', pkl.load(open('actmat_dict.pkl', 'rb')), path)
 
 
 def run_multiple():
@@ -54,7 +54,7 @@ def get_folders(abspath):
 
 
 def run_task(name, file, path):
-    """run a single rat with the supplied filen name and path to save to
+    """run a single rat with the supplied file name and path to save to
     :param name: which rat
     :param file: actmat
     :param path: path to save to
@@ -117,9 +117,10 @@ def load_data(data, name):
                 strname = f'PT5_{nameitt}_{binnames[bin % 9]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
+    
     order_i = order_list(data_tuples, 2, 1)
     order_ii = order_list(data_tuples, 1, 2)
-    keys = dataset.keys()
+    keys = outdata.keys()
     pkl.dump(order_i, open('order_by_timeperiod.pkl', 'wb'))
     pkl.dump(order_ii, open('order_by_realtime.pkl', 'wb'))
     return outdata
@@ -161,6 +162,7 @@ def find_distribution(data):
     :param data:
     :return:
     """
+    global keys
     stds = {}
     means = {}
     len_of_arr = len(data['trial1 0'])
@@ -203,13 +205,13 @@ def compare_with_org(stds, means, original, name, path):
     print('plotting...')
     for key in keys:
         values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
-        plt.figure(figsize=(18, 15))
-        sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
-        plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
-        plt.xlabel('Neuron #')
-        plt.ylabel('Neuron #')
-        plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
-    plt.show()
+        #plt.figure(figsize=(18, 15))
+        #sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
+        #plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
+        #plt.xlabel('Neuron #')
+        #plt.ylabel('Neuron #')
+        #plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
+        #plt.close()
     return values
     # save_data(stds, means, values)
 
