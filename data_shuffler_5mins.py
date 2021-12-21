@@ -4,17 +4,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sn
 import os.path
+from operator import itemgetter
 from scipy import spatial, stats
 
 """this script loads an actmat_dict.pkl file and randomizes the order of the spikes for each neuron, 
 fetches the std and mean for each randomized neuron and compares it with the original file"""
 
-iterations = 500
+iterations = 5
 keys = []
-path = '/media/irene/Data/Rat_OS_EPhys_RGS14_Cell_Assembly'
+path = 'C:/Users/Armin/PycharmProjects/Internship_RU'
+order_i = []
+order_ii = []
+order_iii = []
 
 
 def main():
+    # run_multiple()
+    run_task('rat3_SD14_shuff', pkl.load(open('actmat_dict.pkl', 'rb')), path)
+
+
+def run_multiple():
     folders = get_folders(path)
     for folder in folders:
         try:
@@ -26,7 +35,6 @@ def main():
 
         except pkl.UnpicklingError:
             print('something wrong when unpacking pickle file, skipping...')
-
 
     # dataset = load_data(file)
     # plot_existing(pkl.load(open('graph_values_5.pkl', 'rb')))
@@ -54,22 +62,31 @@ def run_task(name, file, path):
     """
     print('-' * 50)
     print(f'running: {name}')
-    dataset = load_data(file)
+    dataset = load_data(file, name)
     randomized_data = randomize_timebins(dataset)
     stds, means = find_distribution(randomized_data)
     values = compare_with_org(stds, means, get_corr(dataset), name, path)
     save_data(stds, means, values, name, path)
 
 
-def load_data(data):
+def load_data(data, name):
     """creates dataframes of the spike matrixes using pandas
     :param data: dict of the data(opened with pickle in run_calculations)
     :param name: which rat
     :return: matrix of correlation values of data
     """
+    global order_i
+    global order_ii
     global keys
-    print('loading data...')
+    order_i = []
+    data_tuples = []
     dataset = {}
+    outdata = {}
+
+    timebins = {'trial': ['trial1', 'trial2', 'trial3', 'trial4', 'trial5'],
+                'posttrial': ['post_trial1', 'post_trial2', 'post_trial3', 'post_trial4']}
+    binnames = ['(0-5)', '(5-10)', '(10-15)', '(15-20)', '(20-25)', '(25-30)', '(30-35)', '(35-40)', '(40-45)']
+
     for key, val in data.items():
         key = key.replace('-', '_').lower()
         dataset[key] = {}
@@ -77,12 +94,35 @@ def load_data(data):
             # if max(arr) != 0:
             dataset[key][i] = list(arr)
         dataset[key] = pd.DataFrame(dataset[key])
-    key = 'post_trial5'
-    for i in range(4):
-        dataset[f'PT5_part{i + 1}'] = dataset[key].iloc[i * 108000: (i + 1) * 108000].reset_index(drop=True)
-    dataset.pop(key)
+
+    for key in dataset.keys():
+        if key in timebins['trial']:
+            # use as is
+            outdata[key] = dataset[key]
+
+            data_tuples.append((f'{key}', int(key[-1]), 0))
+        if key in timebins['posttrial']:
+            # take 9 bins of 5 mins (12000)
+            for bin in range(9):
+                strname = f'{key}_{binnames[bin]}'
+                data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
+                outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
+
+        if key == 'post_trial5':
+            # split into 36 bins of 5 min (12000)
+            nameitt = 0  # this is increased when bin % 9 is 0 (thats 4 times, its to keep track of the parts of pt5)
+            for bin in range(36):
+                if bin % 9 == 0:
+                    nameitt += 1
+                strname = f'PT5_{nameitt}_{binnames[bin % 9]}'
+                data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
+                outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
+    order_i = order_list(data_tuples, 2, 1)
+    order_ii = order_list(data_tuples, 1, 2)
     keys = dataset.keys()
-    return dataset
+    pkl.dump(order_i, open('order_by_timeperiod.pkl', 'wb'))
+    pkl.dump(order_ii, open('order_by_realtime.pkl', 'wb'))
+    return outdata
 
 
 def randomize_timebins(data):
@@ -169,7 +209,7 @@ def compare_with_org(stds, means, original, name, path):
         plt.xlabel('Neuron #')
         plt.ylabel('Neuron #')
         plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
-        plt.close()
+    plt.show()
     return values
     # save_data(stds, means, values)
 
@@ -190,7 +230,21 @@ def plot_existing(data):
     plt.show()
 
 
-def save_data(stds, means, vals, name, path):
+def order_list(tuples, order1, order2):
+    """order supplied tuples based on order 1 and 2
+    :param tuples: (timebin, int1, int2)
+    :param order1:int used to sort
+    :param order2: int used to sort
+    :return: ordered list
+    """
+    ordered = []
+    arr = sorted(tuples, key=itemgetter(order1, order2))
+    for i in arr:
+        ordered.append(i[0])
+    return ordered
+
+
+def save_data(stds, means, vals, name, path=''):
     """dave all data
     :param stds: std values
     :param means: mean values

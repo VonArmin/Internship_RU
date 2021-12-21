@@ -8,7 +8,7 @@ from scipy import spatial
 from operator import itemgetter
 from collections import deque
 
-"""this ia a variant of corr_avgs.py which subdevides each period in 5min bins"""
+"""this ia a variant of corr_avgs.py which subdivides each period in 5min bins"""
 
 path = '/media/irene/Data/Rat_OS_EPhys_RGS14_Cell_Assembly'
 order_i = []
