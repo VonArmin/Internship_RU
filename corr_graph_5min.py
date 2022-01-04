@@ -177,7 +177,6 @@ def corr_corr(data, name, order, line, rat_folder='', path='/media/irene/Data/Ra
     # print('Done and saved')
     # plt.close()
     df.stack()
-    mean = df.mean()
     mean = df.stack().mean()
 
     return mean
