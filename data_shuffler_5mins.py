@@ -12,15 +12,17 @@ fetches the std and mean for each randomized neuron and compares it with the ori
 
 iterations = 500
 keys = []
-path = '/media/irene/Data/Rat_OS_EPhys_RGS14_Cell_Assembly'
-order_i = []
-order_ii = []
-order_iii = []
+path = '/media/genzel/data/Rat_OS_EPhys_RGS14_Cell_Assembly'
+
+
+# order_i = []
+# order_ii = []
+# order_iii = []
 
 
 def main():
     run_multiple()
-    #run_task('rat3_SD14_shuff', pkl.load(open('actmat_dict.pkl', 'rb')), path)
+    # run_task('rat3_SD14_shuff', pkl.load(open('actmat_dict.pkl', 'rb')), path)
 
 
 def run_multiple():
@@ -66,7 +68,10 @@ def run_task(name, file, path):
     randomized_data = randomize_timebins(dataset)
     stds, means = find_distribution(randomized_data)
     values = compare_with_org(stds, means, get_corr(dataset), name, path)
-    save_data(stds, means, values, name, path)
+    if values:
+        save_data(stds, means, values, name, path)
+    else:
+        pass
 
 
 def load_data(data, name):
@@ -99,7 +104,6 @@ def load_data(data, name):
         if key in timebins['trial']:
             # use as is
             outdata[key] = dataset[key]
-
             data_tuples.append((f'{key}', int(key[-1]), 0))
         if key in timebins['posttrial']:
             # take 9 bins of 5 mins (12000)
@@ -107,6 +111,7 @@ def load_data(data, name):
                 strname = f'{key}_{binnames[bin]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
+                outdata[strname] = outdata[strname].set_axis(range(12000), axis='index')
 
         if key == 'post_trial5':
             # split into 36 bins of 5 min (12000)
@@ -117,12 +122,13 @@ def load_data(data, name):
                 strname = f'PT5_{nameitt}_{binnames[bin % 9]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
-    
-    order_i = order_list(data_tuples, 2, 1)
-    order_ii = order_list(data_tuples, 1, 2)
+                outdata[strname]=outdata[strname].set_axis(range(12000), axis='index')
+    # print(outdata)
+    # order_i = order_list(data_tuples, 2, 1)
+    # order_ii = order_list(data_tuples, 1, 2)
     keys = outdata.keys()
-    pkl.dump(order_i, open('order_by_timeperiod.pkl', 'wb'))
-    pkl.dump(order_ii, open('order_by_realtime.pkl', 'wb'))
+    # pkl.dump(order_i, open('order_by_timeperiod.pkl', 'wb'))
+    # pkl.dump(order_ii, open('order_by_realtime.pkl', 'wb'))
     return outdata
 
 
@@ -133,17 +139,31 @@ def randomize_timebins(data):
     """
     print('Randomizing: ')
     randomized_matrices = {}
+    # print(data)
+
     for i in range(iterations):
         if i % 25 == 0:
             print('run:', i)
 
         for key, df in data.items():
+            # print(key)
             for col in df.columns:
+                # print(col)
+                # print(df[col])
                 df[col] = df[col].sample(frac=1).reset_index(drop=True)
-            randomized_matrices[f'{key} {i}'] = spatial.distance.squareform(df.corr(method='pearson'), checks=False,
-                                                                            force='tovector')
+                # print(df[col])
+                # print(col)
+            # entry = spatial.distance.squareform(df.corr(method='pearson'), checks=False,
+            #                                     force='tovector')
+
+            entry = df.corr(method='pearson')
+
+            randomized_matrices[f'{key} {i}'] = entry
+
     print('Done!')
     return randomized_matrices
+
+
 
 
 def get_corr(data):
@@ -165,7 +185,9 @@ def find_distribution(data):
     global keys
     stds = {}
     means = {}
+    # print(data)
     len_of_arr = len(data['trial1 0'])
+
     for key in keys:
         values_stds = []  # storage of stds for a matrix
         values_means = []  # storage of means for a matrix
@@ -173,6 +195,8 @@ def find_distribution(data):
             neuron_vals = []  # storage for means of a neuron
             for iteration in range(iterations):
                 neuron_vals.append(data[f'{key} {iteration}'][neuron])
+            # print(key)
+            # print(neuron_vals)
             std, mean = get_std_mean(neuron_vals)
             values_stds.append(std)
             values_means.append(mean)
@@ -199,19 +223,24 @@ def compare_with_org(stds, means, original, name, path):
     print('calculating...')
     for key in keys:
         values[key] = []
-        for neuron in range(len(stds[key])):
-            value = (original[key][neuron] - means[key][neuron]) / stds[key][neuron]
-            values[key].append(value)
-    print('plotting...')
-    for key in keys:
-        values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
-        #plt.figure(figsize=(18, 15))
-        #sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
-        #plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
-        #plt.xlabel('Neuron #')
-        #plt.ylabel('Neuron #')
-        #plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
-        #plt.close()
+        for neuron in range(len(original[key])):
+            try:
+                value = (original[key][neuron] - means[key][neuron]) / stds[key][neuron]
+                values[key].append(value)
+            except IndexError:
+                return False
+    # print('plotting...')
+
+    # for key in keys:
+    #     values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
+    #     plt.figure(figsize=(18, 15))
+    #     sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
+    #     plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
+    #     plt.xlabel('Neuron #')
+    #     plt.ylabel('Neuron #')
+    #     # plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
+    #     plt.show()
+    #     # plt.close()
     return values
     # save_data(stds, means, values)
 

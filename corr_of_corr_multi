@@ -121,7 +121,7 @@ def avg_of_matrices(dataset, name, order):
     dataset_avg = {}
     for con, arr in dataset.items():
         averages = pd.concat([each.stack() for each in arr], axis=1) \
-            .apply(lambda x: x.mean(), axis=1) \
+            .apply(lambda x: x.mean(), axis=1)\
             .unstack()
         averages = averages.reindex(order)
         averages = averages[order]
