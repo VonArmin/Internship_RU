@@ -31,7 +31,12 @@ def run_multiple():
         try:
             rat = folder.split('/')[-1]
             file = pkl.load(open(f'{folder}/actmat_dict.pkl', 'rb'))
-            run_task(rat, file, folder)
+
+            if not os.path.exists(f'{path}/graph_values_{iterations}_{rat}.pkl'):
+                run_task(rat, file, folder)
+            elif os.path.exists(f'{path}/graph_values_{iterations}_{rat}.pkl'):
+                os.remove(f'{path}/graph_values_{iterations}_{rat}.pkl')
+                run_task(rat, file, folder)
         except FileNotFoundError:
             print('no actmat found for:', rat)
 
@@ -70,8 +75,6 @@ def run_task(name, file, path):
     values = compare_with_org(stds, means, get_corr(dataset), name, path)
     if values:
         save_data(stds, means, values, name, path)
-    else:
-        pass
 
 
 def load_data(data, name):
@@ -122,7 +125,7 @@ def load_data(data, name):
                 strname = f'PT5_{nameitt}_{binnames[bin % 9]}'
                 data_tuples.append((f'{strname}', int(key[10:11]), bin + 1))
                 outdata[strname] = dataset[key].iloc[bin * 12000: (bin + 1) * 12000]
-                outdata[strname]=outdata[strname].set_axis(range(12000), axis='index')
+                outdata[strname] = outdata[strname].set_axis(range(12000), axis='index')
     # print(outdata)
     # order_i = order_list(data_tuples, 2, 1)
     # order_ii = order_list(data_tuples, 1, 2)
@@ -153,10 +156,11 @@ def randomize_timebins(data):
                 df[col] = df[col].sample(frac=1).reset_index(drop=True)
                 # print(df[col])
                 # print(col)
-            # entry = spatial.distance.squareform(df.corr(method='pearson'), checks=False,
-            #                                     force='tovector')
 
-            entry = df.corr(method='pearson')
+            entry = spatial.distance.squareform(df.corr(method='pearson'), checks=False,
+                                                force='tovector')
+
+            # entry = df.corr(method='pearson')
 
             randomized_matrices[f'{key} {i}'] = entry
 
@@ -164,10 +168,8 @@ def randomize_timebins(data):
     return randomized_matrices
 
 
-
-
 def get_corr(data):
-    """calculates the correlation of the amtrix
+    """calculates the correlation of the matrix
     :param data: data
     :return:
     """
@@ -223,24 +225,27 @@ def compare_with_org(stds, means, original, name, path):
     print('calculating...')
     for key in keys:
         values[key] = []
-        for neuron in range(len(original[key])):
+        for neuron in range(len(stds[key])):
             try:
                 value = (original[key][neuron] - means[key][neuron]) / stds[key][neuron]
                 values[key].append(value)
             except IndexError:
+                print('index error, skipping')
                 return False
+        values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
+
     # print('plotting...')
 
-    # for key in keys:
-    #     values[key] = spatial.distance.squareform(values[key], checks=False, force='tomatrix')
-    #     plt.figure(figsize=(18, 15))
-    #     sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
-    #     plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
-    #     plt.xlabel('Neuron #')
-    #     plt.ylabel('Neuron #')
-    #     # plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
-    #     plt.show()
-    #     # plt.close()
+
+
+        # plt.figure(figsize=(18, 15))
+        # sn.heatmap(values[key], square=True, cmap='coolwarm', center=0)
+        # plt.title(f'correlation data: (original-shuffled mean) / shuffled std, {key}, {iterations} iterations, {name}')
+        # plt.xlabel('Neuron #')
+        # plt.ylabel('Neuron #')
+        # # plt.savefig(f'{path}/shuffled_{key}_{iterations}_{name}.png')
+        # # plt.show()
+        # plt.close()
     return values
     # save_data(stds, means, values)
 
