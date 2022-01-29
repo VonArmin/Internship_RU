@@ -65,6 +65,10 @@ def load_data(folders):
 
 
 def find_avgs(data):
+    """ find the averages for each position over all matrices
+    :param data: list of dictionaries
+    :return: one matrix with the averages per position
+    """
     # for sd, df in data.items():
     #     # this will calculate the average of all the trials into a df of the values per sd
     #     trial_averages = pd.concat([each.stack() for each in df.values()], axis=1) \
@@ -82,6 +86,11 @@ def find_avgs(data):
 
 
 def plot_heatmap(data, name):
+    """plts heatmap of data using seaborn
+    :param data: data to plot
+    :param name: name for sake of title
+    :return: shows figure, no returned values
+    """
     avg = data.stack().mean()
     plt.figure(figsize=[20, 20])
     plt.title(f'avg of distances per neuron for: {name}, Mean: {avg}')
@@ -94,6 +103,11 @@ def plot_heatmap(data, name):
 
 
 def plot_bars(rgs, veh):
+    """plots bars of abosulte average of matrices with the sem included
+    :param rgs: avg matrix of rgs data
+    :param veh: avg matrix of vehicle data
+    :return: shows figure, no returned values
+    """
     rgs_sq = spatial.distance.squareform(rgs, checks=False, force='tovector')
     veh_sq = spatial.distance.squareform(veh, checks=False, force='tovector')
     rgs_data = rgs_sq
@@ -111,6 +125,11 @@ def plot_bars(rgs, veh):
 
 
 def plot_hist(rgs, veh):
+    """plots bars of distributions of values in supplied data
+    :param rgs: matrix of rgs averages
+    :param veh: matrix of vehicle averages
+    :return: shows figure, and prints p-test values no returned values
+    """
     points = 20
     rgs = spatial.distance.squareform(rgs, checks=False, force='tovector')
     veh = spatial.distance.squareform(veh, checks=False, force='tovector')
@@ -134,16 +153,16 @@ def plot_hist(rgs, veh):
                 hist_veh[f'{round(hist_range[i], 2)} : {round(hist_range[i + 1], 2)}'] += 1
 
     print(hist_rgs.values())
-    # plt.figure(figsize=[15, 15])
-    # plt.title('Distribution of values of RGS and Vehicle')
-    # plt.bar(height=hist_rgs.values(), x=hist_rgs.keys(), alpha=0.3, label='RGS', color='red')
-    # plt.bar(height=hist_veh.values(), x=hist_rgs.keys(), alpha=0.3, label='Vehicle', color='blue')
-    # plt.xticks(rotation=30, ha='right')
-    # plt.legend()
-    # plt.ylabel('amount of values')
-    # plt.xlabel('range')
-    # plt.show()
-    # print(hist_range)
+    plt.figure(figsize=[15, 15])
+    plt.title('Distribution of values of RGS and Vehicle')
+    plt.bar(height=hist_rgs.values(), x=hist_rgs.keys(), alpha=0.3, label='RGS', color='red')
+    plt.bar(height=hist_veh.values(), x=hist_rgs.keys(), alpha=0.3, label='Vehicle', color='blue')
+    plt.xticks(rotation=30, ha='right')
+    plt.legend()
+    plt.ylabel('amount of values')
+    plt.xlabel('range')
+    plt.show()
+    print(hist_range)
     print('Krusal p-value:                      ', scipy.stats.kruskal(list(hist_rgs.values()), list(hist_veh.values())))
     print('two-sample Kolmogorov-Smirnov p-value:',
           scipy.stats.ks_2samp(list(hist_rgs.values()), list(hist_veh.values())))
