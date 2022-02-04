@@ -90,7 +90,7 @@ def load_data(data, name):
 
 
 def process_data(dataset):
-    """calculates the correlation values for each time bins neurons
+    """calculates the correlation values for each time bins neurons removes values outside 2x std
     :param dataset: dictionary of dataframes of spikes
     :return: dictionary of correlation values
     """

@@ -11,7 +11,7 @@ from operator import itemgetter
 from scipy import spatial, stats
 
 """this script find the average of the shuffled datasets
-it finds all the folders in the path, loads the graph_values_{iterations}_{foldername}.pkl file 
+it finds all the folders in the path, loads the data_corr_of_corr_shuffled_{iterations}{name}.pkl file 
 and find the average of veh and rgs rats separately"""
 
 iterations = 500
@@ -21,15 +21,20 @@ rats = {'vehicle': [1, 2, 6, 9], 'rgs': [3, 4, 7, 8]}
 
 def main():
     subfolders = get_folders_loc(path)
-    rgsdata, vehdata = load_data(subfolders)
+    rgsdata, vehdata, hcvehdata, hcrgsdata = load_data(subfolders)
+
     print('rgs data')
     rgs_avgs = find_avgs(rgsdata)
     print('veh data')
     veh_avgs = find_avgs(vehdata)
-    plot_heatmap(rgs_avgs, 'RGS14')
-    plot_heatmap(veh_avgs, 'Vehicle')
+    hc_avgs_veh = find_avgs(hcvehdata)
+    hc_avgs_rgs = find_avgs(hcvehdata)
+    veh_norm = normalise_dev_by_hc(veh_avgs, hc_avgs_veh)
+    rgs_norm = normalise_dev_by_hc(rgs_avgs, hc_avgs_rgs)
+    plot_heatmap(rgs_norm, 'RGS14 normalised (divided by hc)')
+    plot_heatmap(veh_norm, 'Vehicle normalised (divided by hc)')
     # plot_bars(rgs_avgs, veh_avgs)
-    # plot_hist(rgs_avgs, veh_avgs)
+    plot_hist(rgs_norm, veh_norm)
 
 
 def get_folders_loc(abspath):
@@ -48,20 +53,32 @@ def load_data(folders):
     """
     rgsdata = {}
     vehdata = {}
+    hcrgsdata = {}
+    hcvehdata = {}
     for folder in folders:
         try:
             name = folder.split('/')[-1]
             data = pkl.load(open(f'{folder}/data_corr_of_corr_shuffled_{iterations}{name}.pkl', 'rb'))
             ratnr = int(name.split('_')[0][3:4])
             data = pd.DataFrame(data).fillna(0)
-
-            if ratnr in rats['vehicle']:
-                vehdata[name.strip('.pkl')] = data
-            if ratnr in rats['rgs']:
-                rgsdata[name.strip('.pkl')] = data
+            if name.split('_')[-1] != 'HC':
+                if ratnr in rats['vehicle']:
+                    vehdata[name.strip('.pkl')] = data
+                if ratnr in rats['rgs']:
+                    rgsdata[name.strip('.pkl')] = data
+            elif (name.split('_')[-1] == 'HC') & (name != 'Rat7_SD1_HC'):
+                if ratnr in rats['vehicle']:
+                    hcvehdata[name.strip('.pkl')] = data
+                if ratnr in rats['rgs']:
+                    hcrgsdata[name.strip('.pkl')] = data
         except FileNotFoundError:
             pass
-    return rgsdata, vehdata
+    return rgsdata, vehdata, hcvehdata, hcrgsdata
+
+
+def normalise_dev_by_hc(data, hc):
+    dataset = data.div(hc)
+    return dataset
 
 
 def find_avgs(data):
@@ -94,7 +111,7 @@ def plot_heatmap(data, name):
     avg = data.stack().mean()
     plt.figure(figsize=[20, 20])
     plt.title(f'avg of distances per neuron for: {name}, Mean: {avg}')
-    sn.heatmap(data, square=True, vmax=0.2, vmin=-0.2,cmap='coolwarm')
+    sn.heatmap(data, square=True, cmap='coolwarm', center=0)
     plt.xlabel('time period')
     plt.ylabel('time period')
     plt.savefig(f'{path}/corr_of_corr_{name}_shuffled.png')
@@ -154,16 +171,18 @@ def plot_hist(rgs, veh):
 
     print(hist_rgs.values())
     plt.figure(figsize=[15, 15])
-    plt.title('Distribution of values of RGS and Vehicle')
+    plt.title('Distribution of values of RGS and Vehicle (divided by HC)')
     plt.bar(height=hist_rgs.values(), x=hist_rgs.keys(), alpha=0.3, label='RGS', color='red')
     plt.bar(height=hist_veh.values(), x=hist_rgs.keys(), alpha=0.3, label='Vehicle', color='blue')
     plt.xticks(rotation=30, ha='right')
     plt.legend()
     plt.ylabel('amount of values')
     plt.xlabel('range')
+    plt.savefig(f'{path}/corr_of_corr_distribution_shuffled.png')
     plt.show()
     print(hist_range)
-    print('Krusal p-value:                      ', scipy.stats.kruskal(list(hist_rgs.values()), list(hist_veh.values())))
+    print('Krusal p-value:                      ',
+          scipy.stats.kruskal(list(hist_rgs.values()), list(hist_veh.values())))
     print('two-sample Kolmogorov-Smirnov p-value:',
           scipy.stats.ks_2samp(list(hist_rgs.values()), list(hist_veh.values())))
 
